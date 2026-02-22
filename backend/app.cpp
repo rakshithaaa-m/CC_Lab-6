@@ -22,6 +22,7 @@ int main() {
 
     // Bind to port 8080
     struct sockaddr_in address;
+    memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(8080);
@@ -36,17 +37,21 @@ int main() {
         return 1;
     }
 
-    std::cout << "Server listening on port 8080 (hostname: " 
+    std::cout << "Server listening on port 8080 (hostname: "
               << hostname << ")" << std::endl;
 
     while (true) {
         int client_fd = accept(server_fd, NULL, NULL);
         if (client_fd < 0) continue;
 
-        // Create response body
+        // IMPORTANT: Read the incoming HTTP request
+        char buffer[2048] = {0};
+        read(client_fd, buffer, sizeof(buffer));
+
+        // Response body
         std::string body = "Served by backend: " + std::string(hostname) + "\n";
 
-        // Create full HTTP response
+        // Proper HTTP response
         std::string response = "HTTP/1.1 200 OK\r\n";
         response += "Content-Type: text/plain\r\n";
         response += "Content-Length: " + std::to_string(body.length()) + "\r\n";
